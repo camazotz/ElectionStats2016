@@ -20,12 +20,40 @@ countyInd = 2
 candInd = 5
 voteInd = 6
 voteFracInd = 7
+partyInd = 4
 
 '''wholeData = pd.read_csv("primary_results.csv", header=0, delimiter=",", quoting=3)
 print(wholeData.shape)
 print(wholeData.columns.values)
 #print(wholeData["state"])
 print(wholeData.loc[0][1])'''
+
+countyPartyDict = dict()
+
+for row in results_table:
+    if (row[countyInd].lower(), row[stateInd].lower()) not in countyPartyDict:
+        countyPartyDict[row[countyInd].lower(), row[stateInd].lower()] = {}
+        countyPartyDict[row[countyInd].lower(), row[stateInd].lower()][row[partyInd].lower()] = int(row[voteInd])
+    else:
+        if row[partyInd].lower() not in countyPartyDict[row[countyInd].lower(), row[stateInd].lower()]:
+            countyPartyDict[row[countyInd].lower(), row[stateInd].lower()][row[partyInd].lower()] = int(row[voteInd])
+        else:
+            countyPartyDict[row[countyInd].lower(), row[stateInd].lower()][row[partyInd].lower()] += int(row[voteInd])
+
+
+
+statePartyDict = dict()
+
+for row in results_table:
+    if row[stateInd].lower() not in statePartyDict:
+        statePartyDict[row[stateInd].lower()] = {}
+        statePartyDict[row[stateInd].lower()][row[partyInd].lower()] = int(row[voteInd])
+    else:
+        if row[partyInd].lower() not in statePartyDict[row[stateInd].lower()]:
+            statePartyDict[row[stateInd].lower()][row[partyInd].lower()] = int(row[voteInd])
+        else:
+            statePartyDict[row[stateInd].lower()][row[partyInd].lower()] += int(row[voteInd])
+
 
 countyDict = dict()
 
@@ -74,6 +102,18 @@ for row in results_table:
 
 #print(candidateDict);
 
+
+
+def countyStateVoting(countyName, stateName):
+    stateVotes = sum(statePartyDict[stateName].values())
+    countyVotes = sum(countyPartyDict[countyName, stateName].values())
+
+    countyFrac = countyVotes / stateVotes
+    countyFrac = countyFrac * 100
+    countyPercent = round(countyFrac, 2)
+
+    print(countyName.title(), ' county has ', countyPercent, '% of the votes in ', stateName.title(), sep='')
+
 def candidateChart(candidateName):
     maxVal = max(candidateDict[candidateName].values())
 
@@ -118,6 +158,15 @@ def countyCheck():
 
     return (aCounty, aState)
 
+def countyCheck(stateName):
+    aCounty = input('\nPlease enter county name: ').strip().lower()
+
+    while (aCounty, stateName) not in countyDict:
+        print('\nInvalid county\\state combination. Please try again.')
+        aCounty = input('\nPlease enter county name: ').strip().lower()
+
+    return aCounty
+
 def stateCheck():
     stateName = input('\nPlease enter state name: ').strip().lower()
 
@@ -135,6 +184,35 @@ def candCheck():
         candName = input('Please enter candidate name: ').strip().lower()
 
     return candName
+
+def partyCheck():
+    partyName = input('\nPlease enter party name: ').strip().lower()
+    partyTypes = ['democratic', 'democrat', 'republican']
+    while partyName not in partyTypes:
+        print('\nInvalid party name. Please try again.')
+        partyName = input('Please enter party name: ').strip().lower()
+
+    if partyName == partyTypes[0]:
+        partyName = 'democrat'
+
+    return partyName
+
+
+def countyPartyVoting(countyName, stateName, partyName):
+    if partyName not in countyPartyDict[countyName, stateName]:
+        print(countyName.title(), ', ', stateName.title(), ' has no voting information for ', partyName.title(), ' party', sep='')
+    else:
+        print(partyName.title(), ' has ', countyPartyDict[countyName, stateName][partyName], ' votes in ',
+              countyName.title(), ', ', stateName.title(), sep='')
+
+
+def statePartyCheck(stateName, partyName):
+    if partyName not in statePartyDict[stateName]:
+        print(stateName.title(), ' has no voting information for ', partyName.title(), ' party', sep='')
+    else:
+        print(partyName.title(), ' has ', statePartyDict[stateName][partyName], ' votes in ',
+              stateName.title(), sep='')
+
 
 def candCountyVoting(countyName, stateName, candName):
     #print(countyDict[countyName,stateName])
@@ -233,8 +311,8 @@ while (True):
 
     # County mode
     elif mode == 2:
-        print('County mode!')
-        countyName = input('\nPlease enter county name: ').strip().lower()
+        print('\nCounty mode!')
+        countyName = input('Please enter county name: ').strip().lower()
         stateName = input('Please enter state of the county: ').strip().lower()
 
         while (countyName, stateName) not in countyDict:
@@ -251,39 +329,72 @@ while (True):
             print('\t4 - Help')
             print('\t3 - Return to main menu')
             print('\t2 - State information for county')
-            print('\t1 - Candidate information for county')
+            print('\t1 - Party information for county')
 
             # County mode error checking
             countyMode = modeCheck()
 
 
-            # Candidate information for county
+            # Party information for county
             if countyMode == 1:
-                candName = candCheck()
-                candCountyVoting(countyName, stateName, candName)
+                aParty = partyCheck()
+                countyPartyVoting(countyName, stateName, aParty)
 
             # State information for county
             elif countyMode == 2:
-                print('some fraction')
+                countyStateVoting(countyName, stateName)
 
             # Return to main menu
             elif countyMode == 3:
                 break
 
+            # Help
             elif countyMode == 4:
                 print('Help items')
 
+            # Quit
             elif countyMode == 5:
                 sys.exit()
 
+    elif mode == 3:
+        print('\nState mode!')
+        stateName = input('Please enter state of the county: ').strip().lower()
+
+        while stateName not in stateDict:
+            print('\nInvalid state name. Please try again.')
+            stateName = input('Please enter the name of a state: ').strip().lower()
+
+        stateChart(stateName)
+
+        while (True):
+            print('\nState mode options:')
+            print('\t5 - Quit')
+            print('\t4 - Help')
+            print('\t3 - Return to main menu')
+            print('\t2 - County information for state')
+            print('\t1 - Party information for state')
+
+            stateMode = modeCheck()
+
+            if stateMode == 1:
+                partyName = partyCheck()
+                statePartyCheck(stateName, partyName)
+
+            elif stateMode == 2:
+                aCounty = countyCheck(stateName)
+                countyStateVoting(aCounty, stateName)
+
+            elif stateMode == 3:
+                break
+
+            elif stateMode == 4:
+                print('help')
+
+            elif stateMode == 5:
+                sys.exit()
 
     elif mode == 4:
         print('Help items')
 
     elif mode == 5:
         sys.exit()
-
-
-
-
-
