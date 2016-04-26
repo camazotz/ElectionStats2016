@@ -3,8 +3,27 @@ __author__ = 'nav'
 import pandas as pd
 import sys
 
-with open("primary_results.csv") as f:
-    results_lines = f.readlines()
+
+def addDataset():
+    userDataset = ''
+    results_lines = []
+    while True:
+        try:
+            userDataset = input('Please enter a dataset: ')
+
+            with open(userDataset) as f:
+                results_lines = f.readlines()
+        except:
+            print('Incorrect dataset. Please try again.')
+            continue
+
+        break
+
+    return results_lines
+
+results_lines = addDataset()
+
+
 
 results_table = []
 firstline = True
@@ -15,12 +34,66 @@ for line in results_lines:
         continue
     results_table.append(strippedLine.split(","))
 
-stateInd = 0
-countyInd = 2
-candInd = 5
-voteInd = 6
-voteFracInd = 7
-partyInd = 4
+
+def indModeCheck():
+    mode = input('Select mode: ').strip()
+    try:
+        mode = int(mode)
+    except ValueError:
+        mode = mode
+    while (isinstance(mode, int) is False) or mode != 1 and mode != 2:
+        print('\nInvalid mode. Please try again.')
+        mode = input('Select mode: ').strip()
+        try:
+            mode = int(mode)
+        except ValueError:
+            mode = mode
+
+    return mode
+
+def fieldIndCheck(field):
+    mode = input('Please enter the index for ' + field+ ': ').strip()
+    try:
+        mode = int(mode)
+    except ValueError:
+        mode = mode
+    while (isinstance(mode, int) is False):
+        print('\nInvalid index. Please try again.')
+        mode = input('Please enter the index for ' + field + ': ').strip()
+        try:
+            mode = int(mode)
+        except ValueError:
+            mode = mode
+
+    return mode
+
+def setFields():
+    newStateInd = fieldIndCheck('state')
+    newCountyInd = fieldIndCheck('county')
+    newCandInd = fieldIndCheck('candidate')
+    newVoteInd = fieldIndCheck('vote')
+    newPartyInd = fieldIndCheck('party')
+
+    return newStateInd, newCountyInd, newCandInd, newVoteInd, newPartyInd
+
+def setIndices():
+    print('You have the option to set indices for the fields in the dataset or use the default fields.')
+    print('Would you like to set your own fields?')
+    print('\t1 - Yes')
+    print('\t2 - No')
+    indMode = indModeCheck()
+    if indMode == 1:
+        stateInd, countyInd, candInd, voteInd, partyInd = setFields()
+    elif indMode == 2:
+        stateInd = 0
+        countyInd = 2
+        candInd = 5
+        voteInd = 6
+        partyInd = 4
+
+    return stateInd, countyInd, candInd, voteInd, partyInd
+
+stateInd, countyInd, candInd, voteInd, partyInd = setIndices()
 
 '''wholeData = pd.read_csv("primary_results.csv", header=0, delimiter=",", quoting=3)
 print(wholeData.shape)
@@ -247,6 +320,22 @@ def modeCheck():
 
     return mode
 
+def helpInstructions():
+    print('\nYou may select from one of three modes: State, county, and candidate.')
+    print('Each mode presents an option menu to view its information in relation to the other modes.')
+    print('When selected, each mode will initially output a bar graph showing the number of votes'
+          ' as a function of another mode.')
+    print('The number of votes is scaled to 10. So 10 asterisks on the bar graph for any variable'
+          'indicates that the variable has the highest number of votes in that function.')
+    print('So for example, if you select candidate mode, you will initially see a bar graph of '
+          'the number of votes the candidate has garnered from each state. '
+          '\nThe state with 10 asterisks next to it is the state from which the candidate has earned'
+          ' the most votes.'
+          '\nAnd then you have the option to see the candidate\'s'
+          ' voting information for a given state or a given county (which is supplied by the user).')
+    print('You may re-enter this help menu by inputting the appropriate option at any of the mode menus.')
+    print('You may exit the program at any of mode menus by inputting the appropriate option.')
+
 #print(candidateDict)
 print('Election result querying system')
 print('Enter \'help\' at any of the mode menus to be directed to the guidelines on using this system')
@@ -304,7 +393,7 @@ while (True):
                 break
 
             elif candMode == 4:
-                print('Help items')
+                helpInstructions()
 
             elif candMode == 5:
                 sys.exit()
@@ -350,7 +439,7 @@ while (True):
 
             # Help
             elif countyMode == 4:
-                print('Help items')
+                helpInstructions()
 
             # Quit
             elif countyMode == 5:
@@ -388,13 +477,13 @@ while (True):
                 break
 
             elif stateMode == 4:
-                print('help')
+                helpInstructions()
 
             elif stateMode == 5:
                 sys.exit()
 
     elif mode == 4:
-        print('Help items')
+        helpInstructions()
 
     elif mode == 5:
         sys.exit()
